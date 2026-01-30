@@ -3,50 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Stores | සියලුම ගබඩා</title>
-    
+    <title>ගබඩාව බලන්න</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root { --primary: #2563eb; --bg: #f1f5f9; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
-        
-        .navbar { background: var(--primary); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        
-        .search-container { margin-bottom: 2rem; text-align: center; }
-        #storeSearch { width: 100%; max-width: 500px; padding: 12px 20px; border-radius: 30px; border: 1px solid #ddd; font-size: 1rem; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
-        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-        
-        .store-card { background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; cursor: pointer; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; padding: 1.5rem; text-align: center; }
-        .store-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--primary); }
-        
-        .store-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem; border: 3px solid #f1f5f9; }
-        .store-name { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0.5rem 0; }
-        .store-desc { font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; flex-grow: 1; }
-        
-        .view-btn { background: var(--primary); color: white; padding: 10px 25px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
-        .view-btn:hover { background: #1e40af; }
-
-        #loading { text-align: center; padding: 50px; font-size: 1.2rem; color: #64748b; }
+        body { font-family: sans-serif; background: #fff; margin: 0; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        .header img { width: 100px; height: 100px; border-radius: 50%; }
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+        .item-card { border: 1px solid #ddd; padding: 10px; border-radius: 8px; text-align: center; }
+        .item-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 5px; }
+        .price { color: #2563eb; font-size: 1.2rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="navbar">
-    <h1 style="margin:0;"><i class="fas fa-shopping-basket"></i> අපේ ගමේ කඩවල්</h1>
-</div>
-
-<div class="container">
-    <div class="search-container">
-        <input type="text" id="storeSearch" placeholder="ගබඩාවක නමක් සොයන්න..." oninput="filterStores()">
+<div id="content">
+    <div class="header">
+        <img id="logo" src="">
+        <h1 id="name">Loading...</h1>
+        <p id="desc"></p>
     </div>
-
-    <div id="loading"><i class="fas fa-spinner fa-spin"></i> ගබඩා පූරණය වෙමින් පවතී...</div>
-    <div class="store-grid" id="storeGrid"></div>
+    <div id="items" class="item-grid"></div>
 </div>
 
 <script>
@@ -59,66 +37,45 @@
         messagingSenderId: "724079651866",
         appId: "1:724079651866:web:c3e5d1899be414fc8875a3"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let allStores = [];
 
-    function loadAllStores() {
-        db.ref('approved_stores').on('value', snap => {
-            const data = snap.val();
-            const grid = document.getElementById('storeGrid');
-            const loading = document.getElementById('loading');
-            
-            grid.innerHTML = "";
-            loading.style.display = "none";
-            allStores = [];
+    // URL එකෙන් id එක ගන්නවා (e.g. view.html?id=123)
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeId = urlParams.get('id');
 
-            if (!data) {
-                grid.innerHTML = "<h3>දැනට ලියාපදිංචි ගබඩා කිසිවක් නැත.</h3>";
-                return;
-            }
-
-            for (let uid in data) {
-                const store = data[uid];
-                store.uid = uid; // UID එක පසුව භාවිතා කිරීමට එකතු කර ගනී
-                allStores.push(store);
-                renderStoreCard(store);
+    if (storeId) {
+        // ගබඩාවේ විස්තර ගන්නවා
+        db.ref('approved_stores/' + storeId).on('value', snap => {
+            const s = snap.val();
+            if (s) {
+                document.getElementById('name').innerText = s.storeName;
+                document.getElementById('desc').innerText = s.description || "";
+                document.getElementById('logo').src = s.logo || "https://via.placeholder.com/100";
             }
         });
+
+        // බඩු ලැයිස්තුව ගන්නවා
+        db.ref('store_data/' + storeId + '/categories').on('value', snap => {
+            const itemDiv = document.getElementById('items');
+            itemDiv.innerHTML = "";
+            const cats = snap.val();
+            for (let cId in cats) {
+                const products = cats[cId].products;
+                for (let pId in products) {
+                    const p = products[pId];
+                    itemDiv.innerHTML += `
+                        <div class="item-card">
+                            <img src="${p.image || 'https://via.placeholder.com/150'}">
+                            <h4>${p.name}</h4>
+                            <div class="price">Rs. ${p.currentDaily}</div>
+                        </div>`;
+                }
+            }
+        });
+    } else {
+        document.body.innerHTML = "<h1>Store ID එකක් නැත!</h1>";
     }
-
-    function renderStoreCard(store) {
-        const grid = document.getElementById('storeGrid');
-        const card = document.createElement('div');
-        card.className = 'store-card';
-        card.onclick = () => window.location.href = `view.html?id=${store.uid}`;
-        
-        card.innerHTML = `
-            <img src="${store.logo || 'https://via.placeholder.com/100'}" class="store-img">
-            <div class="store-name">${store.storeName}</div>
-            <div class="store-desc">${store.description || 'විස්තරයක් ඇතුළත් කර නොමැත.'}</div>
-            <a href="view.html?id=${store.uid}" class="view-btn">බඩු බලන්න</a>
-        `;
-        grid.appendChild(card);
-    }
-
-    function filterStores() {
-        const searchText = document.getElementById('storeSearch').value.toLowerCase();
-        const grid = document.getElementById('storeGrid');
-        grid.innerHTML = "";
-        
-        const filtered = allStores.filter(s => 
-            s.storeName.toLowerCase().includes(searchText) || 
-            (s.description && s.description.toLowerCase().includes(searchText))
-        );
-
-        filtered.forEach(renderStoreCard);
-    }
-
-    // ආරම්භයේදී සියලුම ගබඩා පූරණය කිරීම
-    loadAllStores();
 </script>
-
 </body>
 </html>
