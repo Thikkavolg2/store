@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>අද වෙළඳපොළ මිල ගණන් - පදියතලාව</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
+        .container { max-width: 800px; margin: auto; }
+        .header { text-align: center; background: #1a73e8; color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .store-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .store-name { color: #1a73e8; border-bottom: 2px solid #f0f2f5; padding-bottom: 8px; margin-bottom: 12px; font-size: 1.2rem; display: flex; justify-content: space-between; }
+        .price-table { width: 100%; border-collapse: collapse; }
+        .price-table td { padding: 10px; border-bottom: 1px solid #f9f9f9; }
+        .price-label { font-weight: 500; color: #333; }
+        .price-value { text-align: right; color: #27ae60; font-weight: bold; }
+        .last-update { font-size: 0.7rem; color: #999; margin-top: 5px; }
+        .no-data { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>අද වෙළඳපොළ මිල ගණන්</h1>
+        <p>පදියතලාව ඒකාබද්ධ මිල දර්ශකය</p>
+    </div>
+
+    <div id="pricesContent">දත්ත පූරණය වෙමින්...</div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAcmM1H6QGNa7qqb7RhQKH6evqCx_Jn1os",
+        authDomain: "stores-padiyatalawa.firebaseapp.com",
+        projectId: "stores-padiyatalawa",
+        databaseURL: "https://stores-padiyatalawa-default-rtdb.firebaseio.com",
+        storageBucket: "stores-padiyatalawa.firebasestorage.app",
+        messagingSenderId: "724079651866",
+        appId: "1:724079651866:web:c3e5d1899be414fc8875a3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // මුලින්ම අනුමත වූ සියලුම වෙළඳසැල් ලබාගන්න
+    db.ref('approved_stores').on('value', (storeSnapshot) => {
+        const stores = storeSnapshot.val();
+        const contentDiv = document.getElementById('pricesContent');
+        contentDiv.innerHTML = "";
+
+        if (!stores) {
+            contentDiv.innerHTML = "<div class='no-data'>තවමත් ලියාපදිංචි වූ වෙළඳසැල් නොමැත.</div>";
+            return;
+        }
+
+        // දැන් එක් එක් වෙළඳසැලේ මිල ගණන් ලබාගන්න
+        db.ref('prices').on('value', (priceSnapshot) => {
+            const allPrices = priceSnapshot.val();
+            
+            for (let uid in stores) {
+                let store = stores[uid];
+                let storePrices = allPrices ? allPrices[uid] : null;
+
+                let storeHtml = `
+                    <div class="store-card">
+                        <div class="store-name">
+                            <span>🏪 ${store.storeName}</span>
+                            <span style="font-size: 0.8rem; color: #666;">📞 ${store.phone}</span>
+                        </div>
+                        <table class="price-table">
+                `;
+
+                if (storePrices) {
+                    for (let item in storePrices) {
+                        storeHtml += `
+                            <tr>
+                                <td class="price-label">${item}</td>
+                                <td class="price-value">රු. ${storePrices[item].price}</td>
+                            </tr>
+                        `;
+                    }
+                } else {
+                    storeHtml += `<tr><td colspan="2" style="color:#999; text-align:center;">මිල ගණන් තවම ඇතුළත් කර නැත.</td></tr>`;
+                }
+
+                storeHtml += `</table></div>`;
+                contentDiv.innerHTML += storeHtml;
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
