@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store View</title>
+    <title>Live Store View</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,33 +11,36 @@
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: #1e293b; }
-        .header { background: white; padding: 2rem 1rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .header { background: white; padding: 2.5rem 1rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .store-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
-        .product-card { background: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+        .product-card { background: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee; }
         .prod-img { width: 100%; height: 160px; object-fit: cover; border-radius: 0.75rem; }
-        .price-tag { font-size: 1.5rem; color: var(--primary); font-weight: 800; display: block; margin: 10px 0; }
-        .btn-trend { width: 100%; background: #f1f5f9; border: none; padding: 0.7rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; color: var(--primary); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; position: relative; }
+        .price-tag { font-size: 1.6rem; color: var(--primary); font-weight: 800; display: block; margin: 10px 0; }
+        .btn-trend { width: 100%; background: #f1f5f9; border: none; padding: 0.75rem; border-radius: 0.6rem; cursor: pointer; font-weight: 600; color: var(--primary); transition: 0.3s; }
+        .btn-trend:hover { background: var(--primary); color: white; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-width: 500px; position: relative; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <img id="storeLogo" src="https://via.placeholder.com/100" class="store-logo">
-    <h1 id="storeName">Loading Store...</h1>
-    <p id="storeDesc"></p>
+    <h1 id="storeName" style="margin:10px 0 5px;">Loading Store...</h1>
+    <p id="storeDesc" style="color:gray; margin:0;"></p>
 </div>
 
-<div class="container" id="content"></div>
+<div class="container" id="content">
+    <div style="text-align:center; padding:50px;">දත්ත පූරණය වෙමින් පවතී...</div>
+</div>
 
 <div id="trendModal" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">Price Trend</h3>
+        <h3 id="modalTitle" style="margin-top:0;">Price History</h3>
         <canvas id="trendChart"></canvas>
-        <button onclick="document.getElementById('trendModal').style.display='none'" style="margin-top:10px;" class="btn-trend">Close</button>
+        <button onclick="document.getElementById('trendModal').style.display='none'" style="margin-top:20px;" class="btn-trend">Close View</button>
     </div>
 </div>
 
@@ -58,34 +61,45 @@
     const storeId = params.get('id');
 
     if (!storeId) {
-        document.getElementById('content').innerHTML = "<h2>Error: Store ID missing in URL!</h2>";
+        document.getElementById('content').innerHTML = "<div style='text-align:center;'><h2 style='color:red;'>Store ID එක වැරදියි!</h2><p>Dashboard එකෙන් 'View My Store' බටන් එක භාවිතා කරන්න.</p></div>";
     } else {
-        // පාරිභෝගිකයාට පෙනෙන නම සහ විස්තර (Dashboard එකෙන් එන දත්ත)
+        // Load Profile
         db.ref('approved_stores/' + storeId).on('value', snap => {
             const data = snap.val();
             if(data) {
-                document.getElementById('storeName').innerText = data.storeName;
+                document.getElementById('storeName').innerText = data.storeName || "Unnamed Store";
                 document.getElementById('storeDesc').innerText = data.description || "";
                 if(data.logo) document.getElementById('storeLogo').src = data.logo;
             }
         });
 
-        // බඩු ලැයිස්තුව (Dashboard එකේ Update කළ සැනින් මෙහි පෙනේ)
+        // Load Catalog
         db.ref('store_data/' + storeId + '/categories').on('value', snap => {
             const container = document.getElementById('content');
             container.innerHTML = "";
             const cats = snap.val();
+            
+            if(!cats) {
+                container.innerHTML = "<p style='text-align:center;'>තවමත් භාණ්ඩ ඇතුළත් කර නොමැත.</p>";
+                return;
+            }
+
             for(let id in cats) {
-                let html = `<h3>${cats[id].name}</h3><div class="product-grid">`;
+                let html = `<h2 style="border-left:5px solid var(--primary); padding-left:15px; margin-top:30px;">${cats[id].name}</h2><div class="product-grid">`;
                 let prods = cats[id].products;
-                for(let pId in prods) {
-                    html += `
-                    <div class="product-card">
-                        <img src="${prods[pId].image || 'https://via.placeholder.com/150'}" class="prod-img">
-                        <h4>${prods[pId].name}</h4>
-                        <span class="price-tag">Rs. ${prods[pId].currentDaily}</span>
-                        <button class="btn-trend" onclick="showChart('${id}','${pId}','${prods[pId].name}')">Trend</button>
-                    </div>`;
+                if(prods) {
+                    for(let pId in prods) {
+                        html += `
+                        <div class="product-card">
+                            <img src="${prods[pId].image || 'https://via.placeholder.com/150'}" class="prod-img">
+                            <h4 style="margin:10px 0;">${prods[pId].name}</h4>
+                            <span class="price-tag">Rs. ${prods[pId].currentDaily || '0.00'}</span>
+                            <p style="font-size:11px; color:gray;">Last Updated: ${prods[pId].lastUpdated || 'N/A'}</p>
+                            <button class="btn-trend" onclick="showChart('${id}','${pId}','${prods[pId].name}')">
+                                <i class="fas fa-chart-line"></i> Price Trend
+                            </button>
+                        </div>`;
+                    }
                 }
                 container.innerHTML += html + "</div>";
             }
@@ -95,15 +109,34 @@
     let chart;
     function showChart(cId, pId, name) {
         document.getElementById('trendModal').style.display = 'flex';
-        document.getElementById('modalTitle').innerText = name;
-        db.ref(`store_data/${storeId}/categories/${cId}/products/${pId}/history`).once('value', snap => {
+        document.getElementById('modalTitle').innerText = name + " Trend";
+        db.ref(`store_data/${storeId}/categories/${cId}/products/${pId}/history`).limitToLast(10).once('value', snap => {
             const hist = snap.val();
             const labels = [], prices = [];
-            for(let k in hist) { labels.push(hist[k].date.split(',')[0]); prices.push(hist[k].daily); }
+            if(hist) {
+                Object.values(hist).forEach(item => {
+                    labels.push(item.date.split(',')[0]); // දින පමණක් ගැනීමට
+                    prices.push(item.daily);
+                });
+            }
+            
+            const ctx = document.getElementById('trendChart').getContext('2d');
             if(chart) chart.destroy();
-            chart = new Chart(document.getElementById('trendChart'), {
+            chart = new Chart(ctx, {
                 type: 'line',
-                data: { labels: labels, datasets: [{ label: 'Price', data: prices, borderColor: '#2563eb', fill: true }] }
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Price (LKR)',
+                        data: prices,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
             });
         });
     }
