@@ -99,7 +99,7 @@
                 // Sign In Mode - Check if approved
                 db.ref('approved_stores/' + user.uid).once('value', (snapshot) => {
                     if (snapshot.exists()) {
-                        alert("සාදරයෙන් පිළිගනිමු " + snapshot.val().storeName);
+                        window.location.href = "dashboard.html";
                         // මෙතැනදී Dashboard එකට Redirect කළ හැකියි
                     } else {
                         alert("ඔබ තවමත් අනුමත වී නැත හෝ ලියාපදිංචි වී නැත.");
@@ -113,3 +113,4 @@
 
 </body>
 </html>
+
