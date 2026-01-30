@@ -3,50 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Store View</title>
+    <title>Store View</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: #1e293b; }
         .header { background: white; padding: 2rem 1rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .store-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 10px; }
+        .store-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
-        .cat-title { border-left: 5px solid var(--primary); padding-left: 1rem; margin: 2rem 0 1rem; font-size: 1.5rem; font-weight: 800; }
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
-        .product-card { background: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .prod-img { width: 100%; height: 160px; object-fit: cover; border-radius: 0.75rem; background: #f1f5f9; }
-        .prod-name { font-size: 1.2rem; font-weight: 700; margin: 0.8rem 0 0.4rem; color: #0f172a; }
-        .price-tag { font-size: 1.5rem; color: var(--primary); font-weight: 800; display: block; }
-        .last-update { font-size: 0.75rem; color: #64748b; display: block; margin: 0.5rem 0 1rem; }
-        .btn-trend { width: 100%; background: #f1f5f9; color: var(--primary); border: none; padding: 0.7rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-        
-        /* Modal */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
-        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-width: 600px; position: relative; }
-        .close-modal { position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; border: none; background: none; color: #64748b; }
+        .product-card { background: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+        .prod-img { width: 100%; height: 160px; object-fit: cover; border-radius: 0.75rem; }
+        .price-tag { font-size: 1.5rem; color: var(--primary); font-weight: 800; display: block; margin: 10px 0; }
+        .btn-trend { width: 100%; background: #f1f5f9; border: none; padding: 0.7rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; color: var(--primary); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; position: relative; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <img id="storeLogo" src="https://via.placeholder.com/100" class="store-logo" onerror="this.src='https://via.placeholder.com/100'">
-    <h1 id="storeName" style="margin: 0;">Loading...</h1>
-    <p id="storeDesc" style="color: #64748b; margin: 5px 0 0;"></p>
+    <img id="storeLogo" src="https://via.placeholder.com/100" class="store-logo">
+    <h1 id="storeName">Loading Store...</h1>
+    <p id="storeDesc"></p>
 </div>
 
-<div class="container" id="catalogDisplay">
-    <div style="text-align:center; padding: 3rem;">භාණ්ඩ ලැයිස්තුව පූරණය වෙමින් පවතී...</div>
-</div>
+<div class="container" id="content"></div>
 
 <div id="trendModal" class="modal">
     <div class="modal-content">
-        <button class="close-modal" onclick="closeModal()">&times;</button>
-        <h3 id="modalProdName" style="margin-top:0;">Price Trend</h3>
+        <h3 id="modalTitle">Price Trend</h3>
         <canvas id="trendChart"></canvas>
+        <button onclick="document.getElementById('trendModal').style.display='none'" style="margin-top:10px;" class="btn-trend">Close</button>
     </div>
 </div>
 
@@ -60,116 +51,62 @@
         messagingSenderId: "724079651866",
         appId: "1:724079651866:web:c3e5d1899be414fc8875a3"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // URL එකෙන් ID එක ලබා ගැනීම (e.g. view.html?id=USER_ID_HERE)
     const params = new URLSearchParams(window.location.search);
     const storeId = params.get('id');
 
     if (!storeId) {
-        document.getElementById('catalogDisplay').innerHTML = `
-            <div style="text-align:center; padding: 3rem;">
-                <h2 style="color:red;">Store ID එක වැරදියි!</h2>
-                <p>කරුණාකර නිවැරදි Link එක භාවිතා කරන්න.</p>
-            </div>`;
+        document.getElementById('content').innerHTML = "<h2>Error: Store ID missing in URL!</h2>";
     } else {
-        initView();
-    }
-
-    function initView() {
-        // 1. Load Profile (Dashboard එකේ Save කරන දත්ත එසැණින් ලබා ගනී)
+        // පාරිභෝගිකයාට පෙනෙන නම සහ විස්තර (Dashboard එකෙන් එන දත්ත)
         db.ref('approved_stores/' + storeId).on('value', snap => {
             const data = snap.val();
-            if (data) {
-                document.getElementById('storeName').innerText = data.storeName || "Unnamed Store";
+            if(data) {
+                document.getElementById('storeName').innerText = data.storeName;
                 document.getElementById('storeDesc').innerText = data.description || "";
-                if (data.logo) document.getElementById('storeLogo').src = data.logo;
+                if(data.logo) document.getElementById('storeLogo').src = data.logo;
             }
         });
 
-        // 2. Load Catalog (Dashboard එකේ නම හෝ මිල වෙනස් කළ සැනින් මෙහි Update වේ)
+        // බඩු ලැයිස්තුව (Dashboard එකේ Update කළ සැනින් මෙහි පෙනේ)
         db.ref('store_data/' + storeId + '/categories').on('value', snap => {
-            const container = document.getElementById('catalogDisplay');
+            const container = document.getElementById('content');
             container.innerHTML = "";
-            const categories = snap.val();
-
-            if (!categories) {
-                container.innerHTML = "<div style='text-align:center; padding:3rem;'>තවමත් භාණ්ඩ ඇතුළත් කර නොමැත.</div>";
-                return;
-            }
-
-            for (let catId in categories) {
-                const cat = categories[catId];
-                let html = `<h2 class="cat-title">${cat.name}</h2><div class="product-grid">`;
-
-                if (cat.products) {
-                    for (let prodId in cat.products) {
-                        const p = cat.products[prodId];
-                        html += `
-                        <div class="product-card">
-                            <img src="${p.image || 'https://via.placeholder.com/150'}" class="prod-img">
-                            <div class="prod-name">${p.name}</div>
-                            <span class="price-tag">Rs. ${p.currentDaily || '0.00'}</span>
-                            <span class="last-update"><i class="far fa-clock"></i> Updated: ${p.lastUpdated || 'Just now'}</span>
-                            <button class="btn-trend" onclick="showTrend('${catId}', '${prodId}', '${p.name}')">
-                                <i class="fas fa-chart-line"></i> Price Trend
-                            </button>
-                        </div>`;
-                    }
+            const cats = snap.val();
+            for(let id in cats) {
+                let html = `<h3>${cats[id].name}</h3><div class="product-grid">`;
+                let prods = cats[id].products;
+                for(let pId in prods) {
+                    html += `
+                    <div class="product-card">
+                        <img src="${prods[pId].image || 'https://via.placeholder.com/150'}" class="prod-img">
+                        <h4>${prods[pId].name}</h4>
+                        <span class="price-tag">Rs. ${prods[pId].currentDaily}</span>
+                        <button class="btn-trend" onclick="showChart('${id}','${pId}','${prods[pId].name}')">Trend</button>
+                    </div>`;
                 }
-                html += `</div>`;
-                container.innerHTML += html;
+                container.innerHTML += html + "</div>";
             }
         });
     }
 
-    let trendChart = null;
-    function showTrend(catId, prodId, name) {
-        document.getElementById('modalProdName').innerText = name + " - Price History";
+    let chart;
+    function showChart(cId, pId, name) {
         document.getElementById('trendModal').style.display = 'flex';
-
-        db.ref(`store_data/${storeId}/categories/${catId}/products/${prodId}/history`).limitToLast(10).once('value', snap => {
-            const history = snap.val();
+        document.getElementById('modalTitle').innerText = name;
+        db.ref(`store_data/${storeId}/categories/${cId}/products/${pId}/history`).once('value', snap => {
+            const hist = snap.val();
             const labels = [], prices = [];
-
-            if (history) {
-                Object.values(history).forEach(h => {
-                    // දිනය පමණක් පෙන්වීමට split කරයි (e.g. 1/30/2026)
-                    labels.push(h.date.split(',')[0]); 
-                    prices.push(h.daily);
-                });
-            }
-
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            if (trendChart) trendChart.destroy();
-            
-            trendChart = new Chart(ctx, {
+            for(let k in hist) { labels.push(hist[k].date.split(',')[0]); prices.push(hist[k].daily); }
+            if(chart) chart.destroy();
+            chart = new Chart(document.getElementById('trendChart'), {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Price (LKR)',
-                        data: prices,
-                        borderColor: '#2563eb',
-                        borderWidth: 3,
-                        pointBackgroundColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } }
-                }
+                data: { labels: labels, datasets: [{ label: 'Price', data: prices, borderColor: '#2563eb', fill: true }] }
             });
         });
     }
-
-    function closeModal() { document.getElementById('trendModal').style.display = 'none'; }
-    window.onclick = function(e) { if(e.target == document.getElementById('trendModal')) closeModal(); }
 </script>
 </body>
 </html>
