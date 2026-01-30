@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>සියලුම ගබඩා</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
+        .card img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+        h1 { text-align: center; color: #2563eb; }
+    </style>
+</head>
+<body>
+
+<h1>අපේ ගමේ කඩවල්</h1>
+<div class="grid" id="storeGrid"></div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAcmM1H6QGNa7qqb7RhQKH6evqCx_Jn1os",
+        authDomain: "stores-padiyatalawa.firebaseapp.com",
+        projectId: "stores-padiyatalawa",
+        databaseURL: "https://stores-padiyatalawa-default-rtdb.firebaseio.com",
+        storageBucket: "stores-padiyatalawa.firebasestorage.app",
+        messagingSenderId: "724079651866",
+        appId: "1:724079651866:web:c3e5d1899be414fc8875a3"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    db.ref('approved_stores').on('value', snap => {
+        const grid = document.getElementById('storeGrid');
+        grid.innerHTML = "";
+        const stores = snap.val();
+        for (let id in stores) {
+            grid.innerHTML += `
+                <div class="card" onclick="window.location.href='view.html?id=${id}'">
+                    <img src="${stores[id].logo || 'https://via.placeholder.com/80'}">
+                    <h3>${stores[id].storeName}</h3>
+                    <p>${stores[id].description || ''}</p>
+                </div>`;
+        }
+    });
+</script>
+</body>
+</html>
