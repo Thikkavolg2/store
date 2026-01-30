@@ -35,11 +35,10 @@
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         
         .prod-img { width: 100%; height: 130px; object-fit: cover; border-radius: 0.5rem; margin-bottom: 1rem; background: #f1f5f9; }
-        .price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 1rem 0; }
+        .price-row { display: grid; grid-template-columns: 1fr; gap: 0.5rem; margin: 1rem 0; }
         .price-box label { font-size: 0.7rem; color: var(--secondary); font-weight: bold; text-transform: uppercase; }
-        .price-box input { width: 100%; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 0.3rem; font-weight: 600; }
+        .price-box input { width: 100%; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 0.3rem; font-weight: 600; text-align: center; }
 
-        /* Buttons */
         .btn { padding: 0.6rem 1rem; border-radius: 0.5rem; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
@@ -49,7 +48,6 @@
         .action-row { display: flex; gap: 0.4rem; }
         .btn-icon { width: 36px; height: 36px; padding: 0; }
 
-        /* Modals */
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
         .modal-content { background: white; border-radius: 1rem; padding: 1.5rem; width: 100%; max-width: 450px; position: relative; }
         
@@ -82,14 +80,13 @@
         <button class="btn btn-success" onclick="openModal('categoryModal')"><i class="fas fa-folder-plus"></i> New Category</button>
     </div>
 
-    <div id="catalogContainer">
-        </div>
+    <div id="catalogContainer"></div>
 </div>
 
 <div id="categoryModal" class="modal">
     <div class="modal-content">
         <h3>New Category</h3>
-        <input type="text" id="newCatName" placeholder="Category Name (e.g. Vegetables)" style="width:100%; padding:0.8rem; margin:1rem 0; border:1px solid #ddd; border-radius:0.5rem;">
+        <input type="text" id="newCatName" placeholder="Category Name" style="width:100%; padding:0.8rem; margin:1rem 0; border:1px solid #ddd; border-radius:0.5rem;">
         <div style="display:flex; gap:0.5rem;">
             <button class="btn btn-primary" style="flex:1;" onclick="addCategory()">Create</button>
             <button class="btn btn-danger" onclick="closeModal('categoryModal')">Cancel</button>
@@ -173,7 +170,7 @@
             const container = document.getElementById('catalogContainer');
             container.innerHTML = "";
             const categories = snap.val();
-            if(!categories) return container.innerHTML = "<div style='text-align:center; padding:3rem; color:#64748b;'>No items found. Start by adding a category.</div>";
+            if(!categories) return container.innerHTML = "<div style='text-align:center; padding:3rem; color:#64748b;'>No items found.</div>";
 
             for(let catId in categories) {
                 const cat = categories[catId];
@@ -197,12 +194,8 @@
                             <div style="font-weight:700; font-size:1.1rem; margin-bottom:0.5rem;">${p.name}</div>
                             <div class="price-row">
                                 <div class="price-box">
-                                    <label>Daily</label>
+                                    <label>Daily Price (LKR)</label>
                                     <input type="number" id="d-${prodId}" value="${p.currentDaily || ''}" oninput="toggleUpdateBtn('${prodId}', true)">
-                                </div>
-                                <div class="price-box">
-                                    <label>Monthly</label>
-                                    <input type="number" id="m-${prodId}" value="${p.currentMonthly || ''}" oninput="toggleUpdateBtn('${prodId}', true)">
                                 </div>
                             </div>
                             <button class="btn btn-update" id="btn-${prodId}" onclick="updatePrice('${catId}','${prodId}','${p.name}')">Save Update</button>
@@ -225,12 +218,11 @@
 
     function updatePrice(catId, prodId, name) {
         const d = document.getElementById('d-' + prodId).value;
-        const m = document.getElementById('m-' + prodId).value;
         const time = new Date().toLocaleString();
         const ref = db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}`);
         
-        ref.update({ currentDaily: d, currentMonthly: m, lastUpdated: time }).then(() => {
-            ref.child('history').push({ date: time, daily: d, monthly: m });
+        ref.update({ currentDaily: d, lastUpdated: time }).then(() => {
+            ref.child('history').push({ date: time, daily: d });
             toggleUpdateBtn(prodId, false);
             alert(name + " updated!");
         });
@@ -257,10 +249,7 @@
 
         const save = (img) => {
             db.ref(`store_data/${currentUid}/categories/${catId}/products`).push({ 
-                name: name, 
-                image: img || "",
-                currentDaily: 0,
-                currentMonthly: 0
+                name: name, image: img || "", currentDaily: 0
             });
             closeModal('productModal');
             document.getElementById('prodName').value = "";
@@ -280,7 +269,7 @@
     function openChart(catId, prodId, name) {
         document.getElementById('chartProdName').innerText = name + " Trends";
         openModal('chartModal');
-        db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}/history`).limitToLast(10).once('value', snap => {
+        db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}/history`).limitToLast(15).once('value', snap => {
             const data = snap.val();
             const labels = [], prices = [];
             if(data) Object.values(data).forEach(r => { 
@@ -303,7 +292,7 @@
                         tension: 0.4
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                options: { responsive: true }
             });
         });
     }
