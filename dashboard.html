@@ -11,141 +11,87 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root { --primary: #1a73e8; --secondary: #f39c12; --danger: #e74c3c; --success: #27ae60; --info: #17a2b8; --bg: #f4f6f8; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        :root { --primary: #1a73e8; --secondary: #f39c12; --danger: #e74c3c; --success: #27ae60; --bg: #f4f6f8; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 900px; margin: auto; }
         
-        .container { max-width: 1000px; margin: auto; }
-        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 0.9rem; }
-        .btn-primary { background: var(--primary); }
-        .btn-danger { background: var(--danger); }
-        .btn-success { background: var(--success); }
-        .btn-warning { background: var(--secondary); color: #333; }
-        .btn-info { background: var(--info); }
-        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
-
         /* Profile Section */
-        .profile-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 30px; }
-        .profile-img-container { width: 120px; height: 120px; margin: 0 auto 15px; position: relative; }
-        .profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #eee; }
-        .img-upload-label { position: absolute; bottom: 0; right: 0; background: var(--primary); color: white; padding: 8px; border-radius: 50%; cursor: pointer; font-size: 14px; }
-        .store-name { font-size: 2rem; font-weight: 800; color: #2c3e50; margin: 10px 0; }
-        textarea.desc-box { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px; resize: vertical; min-height: 60px; font-family: inherit; }
-
-        /* Catalog Section */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .category-block { background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border-left: 5px solid var(--primary); }
-        .cat-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
-        .cat-title { font-size: 1.3rem; font-weight: bold; color: #444; }
+        .profile-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; margin-bottom: 25px; }
+        .profile-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); }
+        .store-name-input { font-size: 1.8rem; font-weight: 800; border: none; text-align: center; width: 100%; color: #2c3e50; outline: none; border-bottom: 2px solid transparent; }
+        .store-name-input:focus { border-bottom-color: var(--primary); }
+        .desc-box { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px; resize: none; font-family: inherit; }
 
         /* Product Cards */
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .product-card { border: 1px solid #eee; border-radius: 10px; padding: 15px; background: #fafafa; position: relative; display: flex; flex-direction: column; }
-        .prod-img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; background: #ddd; }
-        .prod-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
-        .prod-desc { font-size: 0.85rem; color: #666; margin-bottom: 10px; height: 40px; overflow: hidden; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
+        .product-card { border-radius: 10px; padding: 12px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .prod-img { width: 100%; height: 110px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; background: #eee; }
+        .prod-name { font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
         
-        .price-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .price-group label { font-size: 0.75rem; font-weight: bold; color: #555; display: block; }
-        .price-group input { width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .price-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .price-inputs label { font-size: 0.7rem; color: #777; font-weight: bold; }
+        .price-inputs input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
         
-        .action-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-top: auto; }
-        .full-width-btn { grid-column: span 3; margin-top: 5px; }
+        .btn { padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; font-size: 0.8rem; }
+        .btn-update { background: var(--success); display: none; width: 100%; margin-bottom: 5px; } /* Hidden by default */
+        .btn-history { background: var(--secondary); color: #333; }
+        .btn-chart { background: #17a2b8; }
+        .btn-delete { background: var(--danger); }
+        .action-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
 
-        /* Modals */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 100; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; position: relative; }
         .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; }
-        input[type="text"], input[type="number"], input[type="file"] { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-
-        /* Chart Controls */
-        .chart-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        .chart-btn { padding: 8px 16px; border: 1px solid var(--primary); background: white; color: var(--primary); border-radius: 20px; cursor: pointer; transition: 0.3s; }
-        .chart-btn.active { background: var(--primary); color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3 style="margin:0; color:#666;">Admin Dashboard</h3>
-        <button class="btn btn-danger" onclick="logout()">Log Out <i class="fas fa-sign-out-alt"></i></button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h4 style="margin:0; color:#888;">Merchant Admin</h4>
+        <button class="btn" style="background:#555;" onclick="logout()">Logout</button>
     </div>
 
     <div class="profile-card">
-        <div class="profile-img-container">
-            <img src="https://via.placeholder.com/150" id="storeLogo" class="profile-img" alt="Store Logo">
-            <label for="logoUpload" class="img-upload-label"><i class="fas fa-camera"></i></label>
+        <div style="position:relative; width:100px; margin:auto;">
+            <img src="https://via.placeholder.com/100" id="storeLogo" class="profile-img">
+            <label for="logoUpload" style="position:absolute; bottom:0; right:0; background:var(--primary); color:white; padding:5px; border-radius:50%; cursor:pointer; font-size:12px;"><i class="fas fa-camera"></i></label>
             <input type="file" id="logoUpload" accept="image/*" style="display:none" onchange="uploadLogo()">
         </div>
-        <h1 id="displayStoreName" class="store-name">Store Name</h1>
-        <textarea id="storeDesc" class="desc-box" placeholder="ඔබේ වෙළඳසැල ගැන කෙටි විස්තරයක් මෙහි ලියන්න..."></textarea>
-        <button class="btn btn-primary" onclick="saveProfile()" style="margin-top:10px;">Save Profile Info</button>
+        <input type="text" id="storeNameField" class="store-name-input" placeholder="Store Name">
+        <textarea id="storeDesc" class="desc-box" placeholder="වෙළඳසැල ගැන විස්තරයක්..."></textarea>
+        <button class="btn" style="background:var(--primary); margin-top:10px; width:100%;" onclick="saveProfile()">Save Changes</button>
     </div>
 
-    <div class="section-header">
-        <h2>📦 Product Catalog</h2>
-        <button class="btn btn-success" onclick="openModal('categoryModal')"><i class="fas fa-plus"></i> Add New Category</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h2 style="font-size:1.2rem; margin:0;">📦 My Inventory</h2>
+        <button class="btn" style="background:var(--success);" onclick="openModal('categoryModal')">+ New Category</button>
     </div>
 
-    <div id="catalogContainer">
-        <p style="text-align:center;">Loading data...</p>
-    </div>
+    <div id="catalogContainer"></div>
 </div>
 
-<div id="categoryModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('categoryModal')">&times;</span>
-        <h3>Add Category (කාණ්ඩය)</h3>
-        <input type="text" id="newCatName" placeholder="Category Name (උදා: එළවළු)">
-        <button class="btn btn-success" onclick="addCategory()">Create Category</button>
-    </div>
-</div>
+<div id="categoryModal" class="modal"><div class="modal-content">
+    <span class="close-btn" onclick="closeModal('categoryModal')">&times;</span>
+    <h3>Add Category</h3>
+    <input type="text" id="newCatName" placeholder="Category Name" style="width:100%; padding:10px; margin-bottom:10px;">
+    <button class="btn" style="background:var(--success); width:100%;" onclick="addCategory()">Add</button>
+</div></div>
 
-<div id="productModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('productModal')">&times;</span>
-        <h3>Add Product (භාණ්ඩය)</h3>
-        <input type="hidden" id="targetCatId">
-        <input type="text" id="prodName" placeholder="Product Name (උදා: කැරට්)">
-        <input type="text" id="prodDesc" placeholder="Description (විස්තරය)">
-        
-        <label>Photo (Low Quality Only):</label>
-        <input type="file" id="prodImgFile" accept="image/*">
-        
-        <div class="price-inputs">
-            <div><label>Daily Price</label><input type="number" id="prodDaily" placeholder="0.00"></div>
-            <div><label>Monthly Price</label><input type="number" id="prodMonthly" placeholder="0.00"></div>
-        </div>
-        <button class="btn btn-primary" onclick="addProduct()">Add Product</button>
-    </div>
-</div>
+<div id="productModal" class="modal"><div class="modal-content">
+    <span class="close-btn" onclick="closeModal('productModal')">&times;</span>
+    <h3>Add Product</h3>
+    <input type="hidden" id="targetCatId">
+    <input type="text" id="prodName" placeholder="Name" style="width:100%; padding:8px; margin-bottom:5px;">
+    <input type="file" id="prodImgFile" accept="image/*" style="margin-bottom:10px;">
+    <button class="btn" style="background:var(--primary); width:100%;" onclick="addProduct()">Add Product</button>
+</div></div>
 
-<div id="historyModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal('historyModal')">&times;</span>
-        <h3>History: <span id="histProdName"></span></h3>
-        <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse: collapse; font-size:0.9rem;">
-                <thead><tr style="background:#f0f0f0;"><th style="padding:8px; border:1px solid #ddd;">Date</th><th style="padding:8px; border:1px solid #ddd;">Daily</th><th style="padding:8px; border:1px solid #ddd;">Monthly</th></tr></thead>
-                <tbody id="historyTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div id="chartModal" class="modal">
-    <div class="modal-content" style="max-width: 600px;">
-        <span class="close-btn" onclick="closeModal('chartModal')">&times;</span>
-        <h3 style="text-align:center;">Price Trends: <span id="chartProdName"></span></h3>
-        
-        <div class="chart-controls">
-            <button class="chart-btn active" id="btnDaily" onclick="switchChart('daily')">Daily Prices</button>
-            <button class="chart-btn" id="btnMonthly" onclick="switchChart('monthly')">Monthly Prices</button>
-        </div>
-
-        <canvas id="priceChart"></canvas>
-    </div>
-</div>
+<div id="chartModal" class="modal"><div class="modal-content">
+    <span class="close-btn" onclick="closeModal('chartModal')">&times;</span>
+    <h3 id="chartProdName" style="text-align:center;"></h3>
+    <canvas id="priceChart"></canvas>
+</div></div>
 
 <script>
     const firebaseConfig = {
@@ -162,258 +108,141 @@
     const auth = firebase.auth();
     const db = firebase.database();
     let currentUid = null;
-    let myChartInstance = null; // To hold the chart instance
-    let currentChartData = { dates: [], daily: [], monthly: [] };
+    let myChartInstance = null;
 
-    // 1. Auth & Initial Load
     auth.onAuthStateChanged(user => {
-        if (user) {
-            currentUid = user.uid;
-            loadProfile();
-            loadCatalog();
-        } else {
-            window.location.href = "index.html";
-        }
+        if (user) { currentUid = user.uid; loadProfile(); loadCatalog(); }
+        else { window.location.href = "index.html"; }
     });
 
-    // 2. Profile Functions
     function loadProfile() {
         db.ref('approved_stores/' + currentUid).on('value', snap => {
             const data = snap.val();
             if(data) {
-                document.getElementById('displayStoreName').innerText = data.storeName;
-                if(data.description) document.getElementById('storeDesc').value = data.description;
+                document.getElementById('storeNameField').value = data.storeName;
+                document.getElementById('storeDesc').value = data.description || "";
                 if(data.logo) document.getElementById('storeLogo').src = data.logo;
             }
         });
     }
 
     function saveProfile() {
+        const name = document.getElementById('storeNameField').value;
         const desc = document.getElementById('storeDesc').value;
-        db.ref('approved_stores/' + currentUid).update({ description: desc })
-          .then(() => alert("Profile Updated!"));
+        db.ref('approved_stores/' + currentUid).update({ storeName: name, description: desc })
+          .then(() => alert("Profile Saved!"));
     }
 
     function uploadLogo() {
         const file = document.getElementById('logoUpload').files[0];
-        if(!file) return;
         const reader = new FileReader();
-        reader.onload = function(e) {
-            db.ref('approved_stores/' + currentUid).update({ logo: e.target.result });
-        };
+        reader.onload = (e) => db.ref('approved_stores/' + currentUid).update({ logo: e.target.result });
         reader.readAsDataURL(file);
     }
 
-    // 3. Catalog Functions
     function loadCatalog() {
         db.ref('store_data/' + currentUid + '/categories').on('value', snap => {
             const container = document.getElementById('catalogContainer');
             container.innerHTML = "";
             const categories = snap.val();
-
-            if(!categories) {
-                container.innerHTML = "<p>තවම Categories කිසිවක් නැත. අලුත් එකක් එකතු කරන්න.</p>";
-                return;
-            }
+            if(!categories) return container.innerHTML = "<p>No categories yet.</p>";
 
             for(let catId in categories) {
                 const cat = categories[catId];
-                
-                let catHTML = `
-                <div class="category-block">
-                    <div class="cat-header">
-                        <span class="cat-title">${cat.name}</span>
-                        <div>
-                            <button class="btn btn-primary" style="font-size:0.8rem" onclick="openProductModal('${catId}')">+ Product</button>
-                            <button class="btn btn-danger" style="font-size:0.8rem" onclick="deleteCategory('${catId}')"><i class="fas fa-trash"></i></button>
-                        </div>
+                let html = `<div style="margin-bottom:20px; background:#eee; padding:10px; border-radius:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <b style="font-size:1.1rem;">${cat.name}</b>
+                        <button class="btn" style="background:var(--primary); padding:4px 10px;" onclick="openProductModal('${catId}')">+ Add</button>
                     </div>
-                    <div class="product-grid">
-                `;
+                    <div class="product-grid">`;
 
                 if(cat.products) {
                     for(let prodId in cat.products) {
-                        const prod = cat.products[prodId];
-                        catHTML += `
+                        const p = cat.products[prodId];
+                        html += `
                         <div class="product-card">
-                            <img src="${prod.image || 'https://via.placeholder.com/150'}" class="prod-img">
-                            <div class="prod-name">${prod.name}</div>
-                            <div class="prod-desc">${prod.description || ''}</div>
-                            
+                            <img src="${p.image || 'https://via.placeholder.com/150'}" class="prod-img">
+                            <div class="prod-name">${p.name}</div>
                             <div class="price-inputs">
-                                <div class="price-group">
-                                    <label>Daily (Rs)</label>
-                                    <input type="number" id="daily-${prodId}" value="${prod.currentDaily || ''}">
-                                </div>
-                                <div class="price-group">
-                                    <label>Monthly (Rs)</label>
-                                    <input type="number" id="monthly-${prodId}" value="${prod.currentMonthly || ''}">
-                                </div>
+                                <div><label>Daily</label><input type="number" id="d-${prodId}" value="${p.currentDaily || ''}" oninput="showBtn('${prodId}')"></div>
+                                <div><label>Monthly</label><input type="number" id="m-${prodId}" value="${p.currentMonthly || ''}" oninput="showBtn('${prodId}')"></div>
                             </div>
-
-                            <div class="action-buttons">
-                                <button class="btn btn-success" onclick="updatePrice('${catId}', '${prodId}', '${prod.name}')">Update</button>
-                                <button class="btn btn-warning" onclick="viewHistory('${catId}', '${prodId}', '${prod.name}')"><i class="fas fa-list"></i> History</button>
-                                <button class="btn btn-danger" onclick="deleteProduct('${catId}', '${prodId}')"><i class="fas fa-trash"></i></button>
-                                <button class="btn btn-info full-width-btn" onclick="openChart('${catId}', '${prodId}', '${prod.name}')"><i class="fas fa-chart-bar"></i> View Chart</button>
+                            <button class="btn btn-update" id="btn-${prodId}" onclick="updatePrice('${catId}','${prodId}','${p.name}')">Save Update</button>
+                            <div class="action-row">
+                                <button class="btn btn-history" title="History" onclick="viewHistory('${catId}','${prodId}')"><i class="fas fa-history"></i></button>
+                                <button class="btn btn-chart" title="Chart" onclick="openChart('${catId}','${prodId}','${p.name}')"><i class="fas fa-chart-bar"></i></button>
+                                <button class="btn btn-delete" title="Delete" onclick="deleteProduct('${catId}','${prodId}')"><i class="fas fa-trash"></i></button>
                             </div>
-                            <div style="font-size:0.7rem; color:#999; margin-top:5px; text-align:right;">Last: ${prod.lastUpdated || 'Never'}</div>
                         </div>`;
                     }
-                } else {
-                    catHTML += `<p style="color:#999; font-size:0.9rem;">No products yet.</p>`;
                 }
-                catHTML += `</div></div>`;
-                container.innerHTML += catHTML;
+                html += `</div></div>`;
+                container.innerHTML += html;
             }
         });
     }
 
+    // Auto-hide logic
+    function showBtn(id) { document.getElementById('btn-' + id).style.display = 'block'; }
+
+    function updatePrice(catId, prodId, name) {
+        const d = document.getElementById('d-' + prodId).value;
+        const m = document.getElementById('m-' + prodId).value;
+        const time = new Date().toLocaleString();
+        const ref = db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}`);
+        
+        ref.update({ currentDaily: d, currentMonthly: m, lastUpdated: time }).then(() => {
+            ref.child('history').push({ date: time, daily: d, monthly: m });
+            document.getElementById('btn-' + id).style.display = 'none'; // Hide after save
+            alert(name + " updated!");
+        });
+    }
+
+    // Modal Helpers
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function openProductModal(id) { document.getElementById('targetCatId').value = id; openModal('productModal'); }
+
     function addCategory() {
-        const name = document.getElementById('newCatName').value;
-        if(!name) return alert("Category නම ඇතුළත් කරන්න");
-        db.ref('store_data/' + currentUid + '/categories').push({ name: name })
-          .then(() => closeModal('categoryModal'));
-    }
-
-    function deleteCategory(catId) {
-        if(confirm("Delete this category?")) db.ref('store_data/' + currentUid + '/categories/' + catId).remove();
-    }
-
-    // 4. Product Functions
-    function openProductModal(catId) {
-        document.getElementById('targetCatId').value = catId;
-        openModal('productModal');
+        const n = document.getElementById('newCatName').value;
+        db.ref('store_data/' + currentUid + '/categories').push({ name: n }).then(() => closeModal('categoryModal'));
     }
 
     function addProduct() {
         const catId = document.getElementById('targetCatId').value;
         const name = document.getElementById('prodName').value;
-        const desc = document.getElementById('prodDesc').value;
-        const daily = document.getElementById('prodDaily').value;
-        const monthly = document.getElementById('prodMonthly').value;
         const file = document.getElementById('prodImgFile').files[0];
-
-        if(!name) return alert("නම අනිවාර්යයි");
-
-        const saveData = (imgUrl) => {
-            const newProd = {
-                name: name,
-                description: desc,
-                image: imgUrl || '',
-                currentDaily: daily,
-                currentMonthly: monthly,
-                lastUpdated: new Date().toLocaleString()
-            };
-            db.ref('store_data/' + currentUid + '/categories/' + catId + '/products').push(newProd)
-              .then(() => { closeModal('productModal'); alert("Saved!"); });
+        
+        const save = (img) => {
+            db.ref(`store_data/${currentUid}/categories/${catId}/products`).push({ name, image: img || "" });
+            closeModal('productModal');
         };
 
         if(file) {
             const reader = new FileReader();
-            reader.onload = (e) => saveData(e.target.result);
+            reader.onload = (e) => save(e.target.result);
             reader.readAsDataURL(file);
-        } else { saveData(null); }
+        } else save(null);
     }
 
-    function deleteProduct(catId, prodId) {
-        if(confirm("Delete product?")) db.ref('store_data/' + currentUid + '/categories/' + catId + '/products/' + prodId).remove();
-    }
+    function deleteProduct(c, p) { if(confirm("Delete?")) db.ref(`store_data/${currentUid}/categories/${c}/products/${p}`).remove(); }
 
-    function updatePrice(catId, prodId, prodName) {
-        const daily = document.getElementById(`daily-${prodId}`).value;
-        const monthly = document.getElementById(`monthly-${prodId}`).value;
-        const time = new Date().toLocaleString();
-
-        const prodRef = db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}`);
-        prodRef.update({ currentDaily: daily, currentMonthly: monthly, lastUpdated: time }).then(() => {
-            prodRef.child('history').push({ date: time, daily: daily, monthly: monthly });
-            alert("Updated!");
-        });
-    }
-
-    // 5. History & Chart Functions
-    function viewHistory(catId, prodId, prodName) {
-        document.getElementById('histProdName').innerText = prodName;
-        const tbody = document.getElementById('historyTableBody');
-        tbody.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
-        openModal('historyModal');
-
-        db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}/history`).limitToLast(20).once('value', snap => {
-            const data = snap.val();
-            tbody.innerHTML = "";
-            if(data) {
-                Object.values(data).reverse().forEach(rec => {
-                    tbody.innerHTML += `<tr><td>${rec.date.split(',')[0]}</td><td>Rs.${rec.daily}</td><td>Rs.${rec.monthly}</td></tr>`;
-                });
-            } else { tbody.innerHTML = "<tr><td colspan='3'>No history</td></tr>"; }
-        });
-    }
-
-    // --- CHART LOGIC ---
-    function openChart(catId, prodId, prodName) {
-        document.getElementById('chartProdName').innerText = prodName;
+    function openChart(catId, prodId, name) {
+        document.getElementById('chartProdName').innerText = name;
         openModal('chartModal');
-        
-        // Reset Chart Data
-        currentChartData = { dates: [], daily: [], monthly: [] };
-        
         db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}/history`).limitToLast(10).once('value', snap => {
             const data = snap.val();
-            if(data) {
-                Object.values(data).forEach(rec => {
-                    // Extract just the date part (DD/MM/YYYY)
-                    let datePart = rec.date.split(',')[0]; 
-                    currentChartData.dates.push(datePart);
-                    currentChartData.daily.push(rec.daily || 0);
-                    currentChartData.monthly.push(rec.monthly || 0);
-                });
-            }
-            // Initialize Chart with Daily Data by default
-            renderChart('daily');
+            const labels = [], daily = [];
+            if(data) Object.values(data).forEach(r => { labels.push(r.date.split(',')[0]); daily.push(r.daily); });
+            
+            if(myChartInstance) myChartInstance.destroy();
+            myChartInstance = new Chart(document.getElementById('priceChart'), {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Daily Price', data: daily, borderColor: '#1a73e8', fill: false }] }
+            });
         });
     }
 
-    function switchChart(type) {
-        // Toggle Buttons
-        document.getElementById('btnDaily').classList.toggle('active', type === 'daily');
-        document.getElementById('btnMonthly').classList.toggle('active', type === 'monthly');
-        renderChart(type);
-    }
-
-    function renderChart(type) {
-        const ctx = document.getElementById('priceChart').getContext('2d');
-        
-        // Destroy previous chart if exists
-        if(myChartInstance) { myChartInstance.destroy(); }
-
-        const dataset = (type === 'daily') ? currentChartData.daily : currentChartData.monthly;
-        const color = (type === 'daily') ? '#1a73e8' : '#27ae60';
-        const label = (type === 'daily') ? 'Daily Price (Rs)' : 'Monthly Price (Rs)';
-
-        myChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: currentChartData.dates,
-                datasets: [{
-                    label: label,
-                    data: dataset,
-                    backgroundColor: color,
-                    borderColor: color,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    }
-
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function logout() { auth.signOut().then(() => window.location.href = "index.html"); }
 </script>
 
