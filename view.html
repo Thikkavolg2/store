@@ -3,95 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>අද වෙළඳපොළ මිල ගණන් - පදියතලාව</title>
+    <title>Customer View - Padiyatalawa Prices</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
-        .container { max-width: 800px; margin: auto; }
-        .header { text-align: center; background: #1a73e8; color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .store-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .store-name { color: #1a73e8; border-bottom: 2px solid #f0f2f5; padding-bottom: 8px; margin-bottom: 12px; font-size: 1.2rem; display: flex; justify-content: space-between; }
-        .price-table { width: 100%; border-collapse: collapse; }
-        .price-table td { padding: 10px; border-bottom: 1px solid #f9f9f9; }
-        .price-label { font-weight: 500; color: #333; }
-        .price-value { text-align: right; color: #27ae60; font-weight: bold; }
-        .last-update { font-size: 0.7rem; color: #999; margin-top: 5px; }
-        .no-data { text-align: center; padding: 40px; color: #666; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        .store-header { background: #1a73e8; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; }
+        .store-logo { width: 60px; height: 60px; border-radius: 50%; background: white; margin-bottom: 10px; }
+        .item-card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .price-tag { color: #27ae60; font-weight: bold; font-size: 1.1rem; }
+        .call-btn { display: inline-block; background: #27ae60; color: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>අද වෙළඳපොළ මිල ගණන්</h1>
-        <p>පදියතලාව ඒකාබද්ධ මිල දර්ශකය</p>
-    </div>
-
-    <div id="pricesContent">දත්ත පූරණය වෙමින්...</div>
-</div>
+<div id="contentArea"></div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAcmM1H6QGNa7qqb7RhQKH6evqCx_Jn1os",
-        authDomain: "stores-padiyatalawa.firebaseapp.com",
-        projectId: "stores-padiyatalawa",
-        databaseURL: "https://stores-padiyatalawa-default-rtdb.firebaseio.com",
-        storageBucket: "stores-padiyatalawa.firebasestorage.app",
-        messagingSenderId: "724079651866",
-        appId: "1:724079651866:web:c3e5d1899be414fc8875a3"
-    };
-
+    const firebaseConfig = { /* ... ඔබේ config එක ... */ };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // මුලින්ම අනුමත වූ සියලුම වෙළඳසැල් ලබාගන්න
-    db.ref('approved_stores').on('value', (storeSnapshot) => {
-        const stores = storeSnapshot.val();
-        const contentDiv = document.getElementById('pricesContent');
-        contentDiv.innerHTML = "";
-
-        if (!stores) {
-            contentDiv.innerHTML = "<div class='no-data'>තවමත් ලියාපදිංචි වූ වෙළඳසැල් නොමැත.</div>";
-            return;
-        }
-
-        // දැන් එක් එක් වෙළඳසැලේ මිල ගණන් ලබාගන්න
-        db.ref('prices').on('value', (priceSnapshot) => {
-            const allPrices = priceSnapshot.val();
+    db.ref('approved_stores').on('value', storesSnap => {
+        const area = document.getElementById('contentArea');
+        area.innerHTML = "";
+        
+        storesSnap.forEach(sSnap => {
+            const store = sSnap.val();
+            const sid = sSnap.key;
             
-            for (let uid in stores) {
-                let store = stores[uid];
-                let storePrices = allPrices ? allPrices[uid] : null;
+            let html = `
+                <div class="store-header">
+                    ${store.logo ? `<img src="${store.logo}" class="store-logo">` : ''}
+                    <h2>${store.storeName}</h2>
+                    <p>${store.description || ''}</p>
+                    ${store.phone ? `<a href="tel:${store.phone}" class="call-btn">📞 Call: ${store.phone}</a>` : ''}
+                </div>
+            `;
 
-                let storeHtml = `
-                    <div class="store-card">
-                        <div class="store-name">
-                            <span>🏪 ${store.storeName}</span>
-                            <span style="font-size: 0.8rem; color: #666;">📞 ${store.phone}</span>
-                        </div>
-                        <table class="price-table">
-                `;
-
-                if (storePrices) {
-                    for (let item in storePrices) {
-                        storeHtml += `
-                            <tr>
-                                <td class="price-label">${item}</td>
-                                <td class="price-value">රු. ${storePrices[item].price}</td>
-                            </tr>
-                        `;
+            db.ref('store_data/' + sid + '/categories').once('value', catSnap => {
+                catSnap.forEach(c => {
+                    const products = c.val().products;
+                    if(products) {
+                        Object.values(products).forEach(p => {
+                            html += `
+                                <div class="item-card">
+                                    <span><strong>${p.name}</strong></span>
+                                    <span class="price-tag">Rs. ${p.currentDaily}</span>
+                                </div>`;
+                        });
                     }
-                } else {
-                    storeHtml += `<tr><td colspan="2" style="color:#999; text-align:center;">මිල ගණන් තවම ඇතුළත් කර නැත.</td></tr>`;
-                }
-
-                storeHtml += `</table></div>`;
-                contentDiv.innerHTML += storeHtml;
-            }
+                });
+                area.innerHTML += html;
+            });
         });
     });
 </script>
-
 </body>
 </html>
