@@ -3,61 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer View - Padiyatalawa Prices</title>
+    <title>Store View - Live Prices</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        .store-header { background: #1a73e8; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; }
-        .store-logo { width: 60px; height: 60px; border-radius: 50%; background: white; margin-bottom: 10px; }
-        .item-card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .price-tag { color: #27ae60; font-weight: bold; font-size: 1.1rem; }
-        .call-btn { display: inline-block; background: #27ae60; color: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; margin-top: 10px; font-weight: bold; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        
+        .header { background: white; padding: 2rem 1rem; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .store-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        
+        .cat-title { border-left: 5px solid var(--primary); padding-left: 1rem; margin: 2rem 0 1rem; font-size: 1.5rem; }
+        
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
+        .product-card { background: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.3s; }
+        .product-card:hover { transform: translateY(-5px); }
+        
+        .prod-img { width: 100%; height: 160px; object-fit: cover; border-radius: 0.75rem; }
+        .prod-name { font-size: 1.2rem; font-weight: 700; margin: 0.5rem 0; }
+        
+        .price-tag { font-size: 1.4rem; color: var(--primary); font-weight: 800; display: block; margin-bottom: 0.5rem; }
+        .last-update { font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 1rem; }
+
+        .btn-trend { width: 100%; background: #eff6ff; color: var(--primary); border: none; padding: 0.6rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn-trend:hover { background: var(--primary); color: white; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 1rem; width: 100%; max-width: 600px; position: relative; }
+        .close-modal { position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; cursor: pointer; border: none; background: none; }
+
+        @media (max-width: 600px) { .product-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-<div id="contentArea"></div>
+<div class="header">
+    <img id="storeLogo" src="https://via.placeholder.com/100" class="store-logo">
+    <h1 id="storeName" style="margin: 0.5rem 0 0.2rem;">Loading Store...</h1>
+    <p id="storeDesc" style="color: #64748b; margin: 0;"></p>
+</div>
+
+<div class="container" id="catalogDisplay">
+    </div>
+
+<div id="trendModal" class="modal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal()">&times;</button>
+        <h3 id="modalProdName">Price Trend</h3>
+        <canvas id="trendChart"></canvas>
+    </div>
+</div>
 
 <script>
-    const firebaseConfig = { /* ... ඔබේ config එක ... */ };
+    const firebaseConfig = {
+        apiKey: "AIzaSyAcmM1H6QGNa7qqb7RhQKH6evqCx_Jn1os",
+        authDomain: "stores-padiyatalawa.firebaseapp.com",
+        projectId: "stores-padiyatalawa",
+        databaseURL: "https://stores-padiyatalawa-default-rtdb.firebaseio.com",
+        storageBucket: "stores-padiyatalawa.firebasestorage.app",
+        messagingSenderId: "724079651866",
+        appId: "1:724079651866:web:c3e5d1899be414fc8875a3"
+    };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    db.ref('approved_stores').on('value', storesSnap => {
-        const area = document.getElementById('contentArea');
-        area.innerHTML = "";
-        
-        storesSnap.forEach(sSnap => {
-            const store = sSnap.val();
-            const sid = sSnap.key;
-            
-            let html = `
-                <div class="store-header">
-                    ${store.logo ? `<img src="${store.logo}" class="store-logo">` : ''}
-                    <h2>${store.storeName}</h2>
-                    <p>${store.description || ''}</p>
-                    ${store.phone ? `<a href="tel:${store.phone}" class="call-btn">📞 Call: ${store.phone}</a>` : ''}
-                </div>
-            `;
+    // URL එකෙන් Store ID එක ලබා ගැනීම (e.g., view.html?id=USER_UID)
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeId = urlParams.get('id'); 
 
-            db.ref('store_data/' + sid + '/categories').once('value', catSnap => {
-                catSnap.forEach(c => {
-                    const products = c.val().products;
-                    if(products) {
-                        Object.values(products).forEach(p => {
-                            html += `
-                                <div class="item-card">
-                                    <span><strong>${p.name}</strong></span>
-                                    <span class="price-tag">Rs. ${p.currentDaily}</span>
-                                </div>`;
-                        });
+    if (!storeId) {
+        document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>Store Not Found!</h2>";
+    } else {
+        loadStoreData();
+    }
+
+    function loadStoreData() {
+        // Load Profile
+        db.ref('approved_stores/' + storeId).on('value', snap => {
+            const data = snap.val();
+            if (data) {
+                document.getElementById('storeName').innerText = data.storeName;
+                document.getElementById('storeDesc').innerText = data.description || "";
+                if (data.logo) document.getElementById('storeLogo').src = data.logo;
+            }
+        });
+
+        // Load Catalog
+        db.ref('store_data/' + storeId + '/categories').on('value', snap => {
+            const container = document.getElementById('catalogDisplay');
+            container.innerHTML = "";
+            const categories = snap.val();
+
+            for (let catId in categories) {
+                const cat = categories[catId];
+                let html = `<h2 class="cat-title">${cat.name}</h2><div class="product-grid">`;
+
+                if (cat.products) {
+                    for (let prodId in cat.products) {
+                        const p = cat.products[prodId];
+                        html += `
+                        <div class="product-card">
+                            <img src="${p.image || 'https://via.placeholder.com/150'}" class="prod-img">
+                            <div class="prod-name">${p.name}</div>
+                            <span class="price-tag">Rs. ${p.currentDaily || '0.00'}</span>
+                            <span class="last-update"><i class="far fa-clock"></i> Updated: ${p.lastUpdated || 'Recently'}</span>
+                            <button class="btn-trend" onclick="showTrend('${catId}', '${prodId}', '${p.name}')">
+                                <i class="fas fa-chart-line"></i> View Price Trend
+                            </button>
+                        </div>`;
                     }
+                }
+                html += `</div>`;
+                container.innerHTML += html;
+            }
+        });
+    }
+
+    let trendChart;
+    function showTrend(catId, prodId, name) {
+        document.getElementById('modalProdName').innerText = name + " - Price Trend";
+        document.getElementById('trendModal').style.display = 'flex';
+
+        db.ref(`store_data/${storeId}/categories/${catId}/products/${prodId}/history`).limitToLast(10).once('value', snap => {
+            const history = snap.val();
+            const labels = [], prices = [];
+
+            if (history) {
+                Object.values(history).forEach(h => {
+                    labels.push(h.date.split(',')[0]); // දින පමණක් පෙන්වීමට
+                    prices.push(h.daily);
                 });
-                area.innerHTML += html;
+            }
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+            
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Price (LKR)',
+                        data: prices,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: false } }
+                }
             });
         });
-    });
+    }
+
+    function closeModal() {
+        document.getElementById('trendModal').style.display = 'none';
+    }
+
+    // Modal එකෙන් පිටත Click කළ විට වසා දැමීම
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('trendModal')) closeModal();
+    }
 </script>
+
 </body>
 </html>
