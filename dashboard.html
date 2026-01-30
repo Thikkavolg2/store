@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Dashboard - Padiyatalawa Stores</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #1a73e8; --success: #27ae60; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        .dashboard-container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        header { border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { margin: 0; color: var(--primary); font-size: 1.4rem; }
+        .user-info { font-size: 0.9rem; color: #666; }
+        .input-group { background: #f1f3f4; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        .btn-update { width: 100%; padding: 12px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .price-list { margin-top: 30px; }
+        .price-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; background: #fff; }
+        .price-item:last-child { border: 0; }
+        .logout-btn { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <header>
+        <div>
+            <h2 id="displayStoreName">වෙළඳසැල</h2>
+            <div class="user-info" id="displayOwner">හිමිකරු</div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+    </header>
+
+    <div class="input-group">
+        <label>අයිතමය තෝරන්න (Item)</label>
+        <select id="itemName">
+            <option value="බෝංචි">බෝංචි (1kg)</option>
+            <option value="කැරට්">කැරට් (1kg)</option>
+            <option value="ලීක්ස්">ලීක්ස් (1kg)</option>
+            <option value="තක්කාලි">තක්කාලි (1kg)</option>
+            <option value="අමු මිරිස්">අමු මිරිස් (1kg)</option>
+            <option value="අල">අල (1kg)</option>
+            <option value="ළූණු">ළූණු (1kg)</option>
+        </select>
+
+        <label>අද මිල (රුපියල්)</label>
+        <input type="number" id="itemPrice" placeholder="0.00">
+
+        <button class="btn-update" onclick="updatePrice()">මිල යාවත්කාලීන කරන්න</button>
+    </div>
+
+    <div class="price-list">
+        <h3>ඔබේ වත්මන් මිල ගණන්</h3>
+        <div id="myPrices">දත්ත පූරණය වෙමින්...</div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAcmM1H6QGNa7qqb7RhQKH6evqCx_Jn1os",
+        authDomain: "stores-padiyatalawa.firebaseapp.com",
+        projectId: "stores-padiyatalawa",
+        databaseURL: "https://stores-padiyatalawa-default-rtdb.firebaseio.com",
+        storageBucket: "stores-padiyatalawa.firebasestorage.app",
+        messagingSenderId: "724079651866",
+        appId: "1:724079651866:web:c3e5d1899be414fc8875a3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUserUID = "";
+
+    // පරිශීලකයා පරීක්ෂා කිරීම
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUserUID = user.uid;
+            checkApproval(user.uid);
+        } else {
+            window.location.href = "index.html"; // ලොග් වී නැත්නම් හෝම් පේජ් එකට
+        }
+    });
+
+    function checkApproval(uid) {
+        db.ref('approved_stores/' + uid).once('value', snapshot => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                document.getElementById('displayStoreName').innerText = data.storeName;
+                document.getElementById('displayOwner').innerText = "හිමිකරු: " + data.ownerName;
+                loadMyPrices(uid);
+            } else {
+                alert("ඔබ තවමත් අනුමත වී නැත!");
+                window.location.href = "index.html";
+            }
+        });
+    }
+
+    function updatePrice() {
+        const name = document.getElementById('itemName').value;
+        const price = document.getElementById('itemPrice').value;
+
+        if(!price) { alert("මිලක් ඇතුළත් කරන්න"); return; }
+
+        db.ref('prices/' + currentUserUID + '/' + name).set({
+            price: price,
+            updatedAt: new Date().toLocaleString()
+        }).then(() => {
+            alert("මිල සාර්ථකව යාවත්කාලීන කළා!");
+            document.getElementById('itemPrice').value = "";
+        });
+    }
+
+    function loadMyPrices(uid) {
+        db.ref('prices/' + uid).on('value', snapshot => {
+            const prices = snapshot.val();
+            const div = document.getElementById('myPrices');
+            div.innerHTML = "";
+            if(prices) {
+                for(let item in prices) {
+                    div.innerHTML += `<div class="price-item">
+                        <span><strong>${item}</strong></span>
+                        <span>රු. ${prices[item].price}</span>
+                    </div>`;
+                }
+            } else {
+                div.innerHTML = "තවමත් මිල ගණන් ඇතුළත් කර නැත.";
+            }
+        });
+    }
+
+    function logout() {
+        auth.signOut().then(() => window.location.href = "index.html");
+    }
+</script>
+
+</body>
+</html>
