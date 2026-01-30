@@ -3,59 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merchant Dashboard - Padiyatalawa Stores</title>
+    <title>Merchant Dashboard - Padiyatalawa</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root { --primary: #1a73e8; --success: #27ae60; --bg: #f8f9fa; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        .dashboard-container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
-        header { border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        h2 { margin: 0; color: var(--primary); font-size: 1.4rem; }
-        .user-info { font-size: 0.9rem; color: #666; }
-        .input-group { background: #f1f3f4; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        .btn-update { width: 100%; padding: 12px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        .price-list { margin-top: 30px; }
-        .price-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; background: #fff; }
-        .price-item:last-child { border: 0; }
-        .logout-btn { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        :root { --primary: #1a73e8; --secondary: #f39c12; --danger: #e74c3c; --success: #27ae60; --info: #17a2b8; --bg: #f4f6f8; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        
+        .container { max-width: 1000px; margin: auto; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 0.9rem; }
+        .btn-primary { background: var(--primary); }
+        .btn-danger { background: var(--danger); }
+        .btn-success { background: var(--success); }
+        .btn-warning { background: var(--secondary); color: #333; }
+        .btn-info { background: var(--info); }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        /* Profile Section */
+        .profile-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 30px; }
+        .profile-img-container { width: 120px; height: 120px; margin: 0 auto 15px; position: relative; }
+        .profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #eee; }
+        .img-upload-label { position: absolute; bottom: 0; right: 0; background: var(--primary); color: white; padding: 8px; border-radius: 50%; cursor: pointer; font-size: 14px; }
+        .store-name { font-size: 2rem; font-weight: 800; color: #2c3e50; margin: 10px 0; }
+        textarea.desc-box { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px; resize: vertical; min-height: 60px; font-family: inherit; }
+
+        /* Catalog Section */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .category-block { background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border-left: 5px solid var(--primary); }
+        .cat-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .cat-title { font-size: 1.3rem; font-weight: bold; color: #444; }
+
+        /* Product Cards */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .product-card { border: 1px solid #eee; border-radius: 10px; padding: 15px; background: #fafafa; position: relative; display: flex; flex-direction: column; }
+        .prod-img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; background: #ddd; }
+        .prod-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
+        .prod-desc { font-size: 0.85rem; color: #666; margin-bottom: 10px; height: 40px; overflow: hidden; }
+        
+        .price-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .price-group label { font-size: 0.75rem; font-weight: bold; color: #555; display: block; }
+        .price-group input { width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .action-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-top: auto; }
+        .full-width-btn { grid-column: span 3; margin-top: 5px; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; }
+        input[type="text"], input[type="number"], input[type="file"] { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+
+        /* Chart Controls */
+        .chart-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .chart-btn { padding: 8px 16px; border: 1px solid var(--primary); background: white; color: var(--primary); border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .chart-btn.active { background: var(--primary); color: white; }
     </style>
 </head>
 <body>
 
-<div class="dashboard-container">
-    <header>
-        <div>
-            <h2 id="displayStoreName">වෙළඳසැල</h2>
-            <div class="user-info" id="displayOwner">හිමිකරු</div>
-        </div>
-        <button class="logout-btn" onclick="logout()">Log out</button>
-    </header>
-
-    <div class="input-group">
-        <label>අයිතමය තෝරන්න (Item)</label>
-        <select id="itemName">
-            <option value="බෝංචි">බෝංචි (1kg)</option>
-            <option value="කැරට්">කැරට් (1kg)</option>
-            <option value="ලීක්ස්">ලීක්ස් (1kg)</option>
-            <option value="තක්කාලි">තක්කාලි (1kg)</option>
-            <option value="අමු මිරිස්">අමු මිරිස් (1kg)</option>
-            <option value="අල">අල (1kg)</option>
-            <option value="ළූණු">ළූණු (1kg)</option>
-        </select>
-
-        <label>අද මිල (රුපියල්)</label>
-        <input type="number" id="itemPrice" placeholder="0.00">
-
-        <button class="btn-update" onclick="updatePrice()">මිල යාවත්කාලීන කරන්න</button>
+<div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3 style="margin:0; color:#666;">Admin Dashboard</h3>
+        <button class="btn btn-danger" onclick="logout()">Log Out <i class="fas fa-sign-out-alt"></i></button>
     </div>
 
-    <div class="price-list">
-        <h3>ඔබේ වත්මන් මිල ගණන්</h3>
-        <div id="myPrices">දත්ත පූරණය වෙමින්...</div>
+    <div class="profile-card">
+        <div class="profile-img-container">
+            <img src="https://via.placeholder.com/150" id="storeLogo" class="profile-img" alt="Store Logo">
+            <label for="logoUpload" class="img-upload-label"><i class="fas fa-camera"></i></label>
+            <input type="file" id="logoUpload" accept="image/*" style="display:none" onchange="uploadLogo()">
+        </div>
+        <h1 id="displayStoreName" class="store-name">Store Name</h1>
+        <textarea id="storeDesc" class="desc-box" placeholder="ඔබේ වෙළඳසැල ගැන කෙටි විස්තරයක් මෙහි ලියන්න..."></textarea>
+        <button class="btn btn-primary" onclick="saveProfile()" style="margin-top:10px;">Save Profile Info</button>
+    </div>
+
+    <div class="section-header">
+        <h2>📦 Product Catalog</h2>
+        <button class="btn btn-success" onclick="openModal('categoryModal')"><i class="fas fa-plus"></i> Add New Category</button>
+    </div>
+
+    <div id="catalogContainer">
+        <p style="text-align:center;">Loading data...</p>
+    </div>
+</div>
+
+<div id="categoryModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('categoryModal')">&times;</span>
+        <h3>Add Category (කාණ්ඩය)</h3>
+        <input type="text" id="newCatName" placeholder="Category Name (උදා: එළවළු)">
+        <button class="btn btn-success" onclick="addCategory()">Create Category</button>
+    </div>
+</div>
+
+<div id="productModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('productModal')">&times;</span>
+        <h3>Add Product (භාණ්ඩය)</h3>
+        <input type="hidden" id="targetCatId">
+        <input type="text" id="prodName" placeholder="Product Name (උදා: කැරට්)">
+        <input type="text" id="prodDesc" placeholder="Description (විස්තරය)">
+        
+        <label>Photo (Low Quality Only):</label>
+        <input type="file" id="prodImgFile" accept="image/*">
+        
+        <div class="price-inputs">
+            <div><label>Daily Price</label><input type="number" id="prodDaily" placeholder="0.00"></div>
+            <div><label>Monthly Price</label><input type="number" id="prodMonthly" placeholder="0.00"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addProduct()">Add Product</button>
+    </div>
+</div>
+
+<div id="historyModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('historyModal')">&times;</span>
+        <h3>History: <span id="histProdName"></span></h3>
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse: collapse; font-size:0.9rem;">
+                <thead><tr style="background:#f0f0f0;"><th style="padding:8px; border:1px solid #ddd;">Date</th><th style="padding:8px; border:1px solid #ddd;">Daily</th><th style="padding:8px; border:1px solid #ddd;">Monthly</th></tr></thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="chartModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close-btn" onclick="closeModal('chartModal')">&times;</span>
+        <h3 style="text-align:center;">Price Trends: <span id="chartProdName"></span></h3>
+        
+        <div class="chart-controls">
+            <button class="chart-btn active" id="btnDaily" onclick="switchChart('daily')">Daily Prices</button>
+            <button class="chart-btn" id="btnMonthly" onclick="switchChart('monthly')">Monthly Prices</button>
+        </div>
+
+        <canvas id="priceChart"></canvas>
     </div>
 </div>
 
@@ -73,69 +161,260 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
+    let currentUid = null;
+    let myChartInstance = null; // To hold the chart instance
+    let currentChartData = { dates: [], daily: [], monthly: [] };
 
-    let currentUserUID = "";
-
-    // පරිශීලකයා පරීක්ෂා කිරීම
+    // 1. Auth & Initial Load
     auth.onAuthStateChanged(user => {
         if (user) {
-            currentUserUID = user.uid;
-            checkApproval(user.uid);
+            currentUid = user.uid;
+            loadProfile();
+            loadCatalog();
         } else {
-            window.location.href = "index.html"; // ලොග් වී නැත්නම් හෝම් පේජ් එකට
+            window.location.href = "index.html";
         }
     });
 
-    function checkApproval(uid) {
-        db.ref('approved_stores/' + uid).once('value', snapshot => {
-            if (snapshot.exists()) {
-                const data = snapshot.val();
+    // 2. Profile Functions
+    function loadProfile() {
+        db.ref('approved_stores/' + currentUid).on('value', snap => {
+            const data = snap.val();
+            if(data) {
                 document.getElementById('displayStoreName').innerText = data.storeName;
-                document.getElementById('displayOwner').innerText = "හිමිකරු: " + data.ownerName;
-                loadMyPrices(uid);
-            } else {
-                alert("ඔබ තවමත් අනුමත වී නැත!");
-                window.location.href = "index.html";
+                if(data.description) document.getElementById('storeDesc').value = data.description;
+                if(data.logo) document.getElementById('storeLogo').src = data.logo;
             }
         });
     }
 
-    function updatePrice() {
-        const name = document.getElementById('itemName').value;
-        const price = document.getElementById('itemPrice').value;
-
-        if(!price) { alert("මිලක් ඇතුළත් කරන්න"); return; }
-
-        db.ref('prices/' + currentUserUID + '/' + name).set({
-            price: price,
-            updatedAt: new Date().toLocaleString()
-        }).then(() => {
-            alert("මිල සාර්ථකව යාවත්කාලීන කළා!");
-            document.getElementById('itemPrice').value = "";
-        });
+    function saveProfile() {
+        const desc = document.getElementById('storeDesc').value;
+        db.ref('approved_stores/' + currentUid).update({ description: desc })
+          .then(() => alert("Profile Updated!"));
     }
 
-    function loadMyPrices(uid) {
-        db.ref('prices/' + uid).on('value', snapshot => {
-            const prices = snapshot.val();
-            const div = document.getElementById('myPrices');
-            div.innerHTML = "";
-            if(prices) {
-                for(let item in prices) {
-                    div.innerHTML += `<div class="price-item">
-                        <span><strong>${item}</strong></span>
-                        <span>රු. ${prices[item].price}</span>
-                    </div>`;
+    function uploadLogo() {
+        const file = document.getElementById('logoUpload').files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            db.ref('approved_stores/' + currentUid).update({ logo: e.target.result });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 3. Catalog Functions
+    function loadCatalog() {
+        db.ref('store_data/' + currentUid + '/categories').on('value', snap => {
+            const container = document.getElementById('catalogContainer');
+            container.innerHTML = "";
+            const categories = snap.val();
+
+            if(!categories) {
+                container.innerHTML = "<p>තවම Categories කිසිවක් නැත. අලුත් එකක් එකතු කරන්න.</p>";
+                return;
+            }
+
+            for(let catId in categories) {
+                const cat = categories[catId];
+                
+                let catHTML = `
+                <div class="category-block">
+                    <div class="cat-header">
+                        <span class="cat-title">${cat.name}</span>
+                        <div>
+                            <button class="btn btn-primary" style="font-size:0.8rem" onclick="openProductModal('${catId}')">+ Product</button>
+                            <button class="btn btn-danger" style="font-size:0.8rem" onclick="deleteCategory('${catId}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="product-grid">
+                `;
+
+                if(cat.products) {
+                    for(let prodId in cat.products) {
+                        const prod = cat.products[prodId];
+                        catHTML += `
+                        <div class="product-card">
+                            <img src="${prod.image || 'https://via.placeholder.com/150'}" class="prod-img">
+                            <div class="prod-name">${prod.name}</div>
+                            <div class="prod-desc">${prod.description || ''}</div>
+                            
+                            <div class="price-inputs">
+                                <div class="price-group">
+                                    <label>Daily (Rs)</label>
+                                    <input type="number" id="daily-${prodId}" value="${prod.currentDaily || ''}">
+                                </div>
+                                <div class="price-group">
+                                    <label>Monthly (Rs)</label>
+                                    <input type="number" id="monthly-${prodId}" value="${prod.currentMonthly || ''}">
+                                </div>
+                            </div>
+
+                            <div class="action-buttons">
+                                <button class="btn btn-success" onclick="updatePrice('${catId}', '${prodId}', '${prod.name}')">Update</button>
+                                <button class="btn btn-warning" onclick="viewHistory('${catId}', '${prodId}', '${prod.name}')"><i class="fas fa-list"></i> History</button>
+                                <button class="btn btn-danger" onclick="deleteProduct('${catId}', '${prodId}')"><i class="fas fa-trash"></i></button>
+                                <button class="btn btn-info full-width-btn" onclick="openChart('${catId}', '${prodId}', '${prod.name}')"><i class="fas fa-chart-bar"></i> View Chart</button>
+                            </div>
+                            <div style="font-size:0.7rem; color:#999; margin-top:5px; text-align:right;">Last: ${prod.lastUpdated || 'Never'}</div>
+                        </div>`;
+                    }
+                } else {
+                    catHTML += `<p style="color:#999; font-size:0.9rem;">No products yet.</p>`;
                 }
-            } else {
-                div.innerHTML = "තවමත් මිල ගණන් ඇතුළත් කර නැත.";
+                catHTML += `</div></div>`;
+                container.innerHTML += catHTML;
             }
         });
     }
 
-    function logout() {
-        auth.signOut().then(() => window.location.href = "index.html");
+    function addCategory() {
+        const name = document.getElementById('newCatName').value;
+        if(!name) return alert("Category නම ඇතුළත් කරන්න");
+        db.ref('store_data/' + currentUid + '/categories').push({ name: name })
+          .then(() => closeModal('categoryModal'));
     }
+
+    function deleteCategory(catId) {
+        if(confirm("Delete this category?")) db.ref('store_data/' + currentUid + '/categories/' + catId).remove();
+    }
+
+    // 4. Product Functions
+    function openProductModal(catId) {
+        document.getElementById('targetCatId').value = catId;
+        openModal('productModal');
+    }
+
+    function addProduct() {
+        const catId = document.getElementById('targetCatId').value;
+        const name = document.getElementById('prodName').value;
+        const desc = document.getElementById('prodDesc').value;
+        const daily = document.getElementById('prodDaily').value;
+        const monthly = document.getElementById('prodMonthly').value;
+        const file = document.getElementById('prodImgFile').files[0];
+
+        if(!name) return alert("නම අනිවාර්යයි");
+
+        const saveData = (imgUrl) => {
+            const newProd = {
+                name: name,
+                description: desc,
+                image: imgUrl || '',
+                currentDaily: daily,
+                currentMonthly: monthly,
+                lastUpdated: new Date().toLocaleString()
+            };
+            db.ref('store_data/' + currentUid + '/categories/' + catId + '/products').push(newProd)
+              .then(() => { closeModal('productModal'); alert("Saved!"); });
+        };
+
+        if(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => saveData(e.target.result);
+            reader.readAsDataURL(file);
+        } else { saveData(null); }
+    }
+
+    function deleteProduct(catId, prodId) {
+        if(confirm("Delete product?")) db.ref('store_data/' + currentUid + '/categories/' + catId + '/products/' + prodId).remove();
+    }
+
+    function updatePrice(catId, prodId, prodName) {
+        const daily = document.getElementById(`daily-${prodId}`).value;
+        const monthly = document.getElementById(`monthly-${prodId}`).value;
+        const time = new Date().toLocaleString();
+
+        const prodRef = db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}`);
+        prodRef.update({ currentDaily: daily, currentMonthly: monthly, lastUpdated: time }).then(() => {
+            prodRef.child('history').push({ date: time, daily: daily, monthly: monthly });
+            alert("Updated!");
+        });
+    }
+
+    // 5. History & Chart Functions
+    function viewHistory(catId, prodId, prodName) {
+        document.getElementById('histProdName').innerText = prodName;
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
+        openModal('historyModal');
+
+        db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}/history`).limitToLast(20).once('value', snap => {
+            const data = snap.val();
+            tbody.innerHTML = "";
+            if(data) {
+                Object.values(data).reverse().forEach(rec => {
+                    tbody.innerHTML += `<tr><td>${rec.date.split(',')[0]}</td><td>Rs.${rec.daily}</td><td>Rs.${rec.monthly}</td></tr>`;
+                });
+            } else { tbody.innerHTML = "<tr><td colspan='3'>No history</td></tr>"; }
+        });
+    }
+
+    // --- CHART LOGIC ---
+    function openChart(catId, prodId, prodName) {
+        document.getElementById('chartProdName').innerText = prodName;
+        openModal('chartModal');
+        
+        // Reset Chart Data
+        currentChartData = { dates: [], daily: [], monthly: [] };
+        
+        db.ref(`store_data/${currentUid}/categories/${catId}/products/${prodId}/history`).limitToLast(10).once('value', snap => {
+            const data = snap.val();
+            if(data) {
+                Object.values(data).forEach(rec => {
+                    // Extract just the date part (DD/MM/YYYY)
+                    let datePart = rec.date.split(',')[0]; 
+                    currentChartData.dates.push(datePart);
+                    currentChartData.daily.push(rec.daily || 0);
+                    currentChartData.monthly.push(rec.monthly || 0);
+                });
+            }
+            // Initialize Chart with Daily Data by default
+            renderChart('daily');
+        });
+    }
+
+    function switchChart(type) {
+        // Toggle Buttons
+        document.getElementById('btnDaily').classList.toggle('active', type === 'daily');
+        document.getElementById('btnMonthly').classList.toggle('active', type === 'monthly');
+        renderChart(type);
+    }
+
+    function renderChart(type) {
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        
+        // Destroy previous chart if exists
+        if(myChartInstance) { myChartInstance.destroy(); }
+
+        const dataset = (type === 'daily') ? currentChartData.daily : currentChartData.monthly;
+        const color = (type === 'daily') ? '#1a73e8' : '#27ae60';
+        const label = (type === 'daily') ? 'Daily Price (Rs)' : 'Monthly Price (Rs)';
+
+        myChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: currentChartData.dates,
+                datasets: [{
+                    label: label,
+                    data: dataset,
+                    backgroundColor: color,
+                    borderColor: color,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function logout() { auth.signOut().then(() => window.location.href = "index.html"); }
 </script>
 
 </body>
