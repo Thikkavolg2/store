@@ -3,37 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Registration - Padiyatalawa</title>
+    <title>Store Registration - Google Login</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
-        .reg-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { text-align: center; color: #2c3e50; font-size: 1.2rem; }
+        body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .reg-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        #recaptcha-container { margin: 10px 0; }
-        .message { margin-top: 15px; font-size: 0.9rem; text-align: center; color: #7f8c8d; }
+        .google-btn { width: 100%; padding: 12px; background: #4285F4; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="reg-card">
     <h2>වෙළඳසැල් ලියාපදිංචිය</h2>
-    <div id="step1">
-        <input type="text" id="ownerName" placeholder="ඔබේ නම">
-        <input type="text" id="storeName" placeholder="වෙළඳසැලේ නම">
-        <input type="tel" id="phone" placeholder="+947XXXXXXXX (අංකය)">
-        <div id="recaptcha-container"></div>
-        <button onclick="sendOTP()">OTP ලබාගන්න</button>
-    </div>
-    <div id="step2" style="display:none;">
-        <p>ලැබුණු OTP කේතය ඇතුළත් කරන්න:</p>
-        <input type="number" id="otpCode" placeholder="######">
-        <button onclick="verifyOTP()">තහවුරු කරන්න</button>
-    </div>
-    <div id="message" class="message"></div>
+    <input type="text" id="storeName" placeholder="වෙළඳසැලේ නම">
+    <input type="tel" id="ownerPhone" placeholder="දුරකථන අංකය">
+    <p style="font-size: 0.8rem; color: #666;">තහවුරු කිරීම සඳහා ඔබේ Google ගිණුමෙන් ලොග් වන්න</p>
+    <button class="google-btn" onclick="signUpWithGoogle()">Google හරහා ලියාපදිංචි වන්න</button>
+    <div id="msg"></div>
 </div>
 
 <script>
@@ -51,35 +40,28 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    let confirmationResult;
+    function signUpWithGoogle() {
+        const store = document.getElementById('storeName').value;
+        const phone = document.getElementById('ownerPhone').value;
 
-    function sendOTP() {
-        const phoneNumber = document.getElementById('phone').value;
-        if(!phoneNumber.startsWith("+94")) { alert("අංකය +94 සමඟ පටන් ගන්න."); return; }
-        
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container');
-        auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
-            .then((result) => {
-                confirmationResult = result;
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('step2').style.display = 'block';
-            }).catch((err) => alert("වැරැද්දක්: " + err.message));
-    }
+        if(!store || !phone) { alert("කරුණාකර සියලු විස්තර පුරවන්න"); return; }
 
-    function verifyOTP() {
-        const code = document.getElementById('otpCode').value;
-        confirmationResult.confirm(code).then((result) => {
-            const uid = result.user.uid;
-            db.ref('pending_stores/' + uid).set({
-                owner: document.getElementById('ownerName').value,
-                store: document.getElementById('storeName').value,
-                phone: document.getElementById('phone').value,
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).then((result) => {
+            const user = result.user;
+            db.ref('pending_stores/' + user.uid).set({
+                ownerName: user.displayName,
+                email: user.email,
+                storeName: store,
+                phone: phone,
                 status: "pending",
                 time: new Date().toLocaleString()
             }).then(() => {
-                document.body.innerHTML = "<h2>ලියාපදිංචිය සාර්ථකයි! ✅</h2><p>Admin ඔබව අනුමත කරන තෙක් රැඳී සිටින්න.</p>";
+                document.body.innerHTML = "<h2>සාර්ථකයි! ✅</h2><p>Admin ඔබව අනුමත කරන තෙක් රැඳී සිටින්න.</p>";
             });
-        }).catch(() => alert("වැරදි OTP එකක්!"));
+        }).catch((error) => {
+            alert("ගැටලුවක් පවතී: " + error.message);
+        });
     }
 </script>
 </body>
